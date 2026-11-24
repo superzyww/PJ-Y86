@@ -24,14 +24,14 @@ void fetch(CPU *cpu)
         cpu->rB=(int)(byte1&15);
         if(cpu->icode==3||cpu->icode==4||cpu->icode==5) 
         {
-            if((cpu->icode==3&&cpu->rA!=0xF)||(cpu->icode==4||cpu->icode==5)&&cpu->rA==0xF||cpu->rB==0xF) cpu->stat=INS;
+            if((cpu->icode==3&&cpu->rA!=0xF)||((cpu->icode==4||cpu->icode==5)&&cpu->rA==0xF)||cpu->rB==0xF) cpu->stat=INS;
             else{cpu->valC=read_mem(cpu, cpu->pc+2, 8);
                 if(cpu->stat!=AOK) return ;
             cpu->valP=cpu->pc+10;}
         }
         else 
         {
-            if(((cpu->icode==2||cpu->icode==6)&&cpu->rB==0xF)||(cpu->icode==0xA||cpu->icode==0xB)&&cpu->rB!=0xF||cpu->rA==0xF) cpu->stat=INS;
+            if(((cpu->icode==2||cpu->icode==6)&&cpu->rB==0xF)||((cpu->icode==0xA||cpu->icode==0xB)&&cpu->rB!=0xF)||cpu->rA==0xF) cpu->stat=INS;
             else cpu->valP=cpu->pc+2;
         }
     }
@@ -158,7 +158,8 @@ void write_back(CPU *cpu)
     (void)cpu;
     switch(cpu->icode){
         case 2: {
-            if(cpu->ifun==0||cpu->cnd) cpu->reg[cpu->rB]=cpu->valE;break;
+            if(cpu->ifun==0||cpu->cnd) cpu->reg[cpu->rB]=cpu->valE;
+            break;
         }
         case 3: cpu->reg[cpu->rB]=cpu->valE;break;
         case 5: cpu->reg[cpu->rA]=cpu->valM;break;
@@ -180,7 +181,7 @@ void update_pc(CPU *cpu)
     switch(cpu->icode){
         case 1: case 2:case 3:case 4:case 5:case 6:case 0xA: case 0xB: cpu->pc=cpu->valP;break;
         case 7:{
-            if(cpu->cnd)cpu->pc=cpu->valC;
+            if(cpu->cnd||cpu->ifun==0)cpu->pc=cpu->valC;
             else cpu->pc=cpu->valP;
             break;
         }
