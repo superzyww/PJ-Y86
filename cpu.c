@@ -141,6 +141,14 @@ void memory_stage(CPU *cpu)
     /* TODO: 根据指令访问内存。pushq 写入 valA，call 写入 valP。
        读取操作将结果写入 valM，使用 read_mem 和 write_mem 检查地址。 */
     cpu->valM = 0;
+    switch(cpu->icode){
+        case 4:write_mem(cpu,cpu->valE,8,cpu->valA);break;
+        case 5:cpu->valM=read_mem(cpu,cpu->valE,8);break;
+        case 8:write_mem(cpu,cpu->valE,8,cpu->valP);break;
+        case 9:cpu->valM=read_mem(cpu,cpu->valA,8);break;
+        case 0xA:write_mem(cpu,cpu->valE,8,cpu->valA);break;
+        case 0xB:cpu->valM=read_mem(cpu,cpu->valA,8);break;
+    }
 }
 
 void write_back(CPU *cpu)
@@ -148,10 +156,35 @@ void write_back(CPU *cpu)
     /* TODO: 选择 dstE、dstM 并写入寄存器。
        若两者均为 RSP，valM 应覆盖 valE。 */
     (void)cpu;
+    switch(cpu->icode){
+        case 2: {
+            if(cpu->ifun==0||cpu->cnd) cpu->reg[cpu->rB]=cpu->valE;break;
+        }
+        case 3: cpu->reg[cpu->rB]=cpu->valE;break;
+        case 5: cpu->reg[cpu->rA]=cpu->valM;break;
+        case 6: cpu->reg[cpu->rB]=cpu->valE;break;
+        case 8: cpu->reg[RSP]=cpu->valE;break;
+        case 9: cpu->reg[RSP]=cpu->valE;break;
+        case 0xA:cpu->reg[RSP]=cpu->valE;break;
+        case 0xB:{
+            cpu->reg[RSP]=cpu->valE;
+            cpu->reg[cpu->rA]=cpu->valM;break;
+        }
+    }
 }
 
 void update_pc(CPU *cpu)
 {
     /* TODO: 按 call、条件跳转、ret 或顺序执行选择下一条指令的地址。 */
     (void)cpu;
+    switch(cpu->icode){
+        case 1: case 2:case 3:case 4:case 5:case 6:case 0xA: case 0xB: cpu->pc=cpu->valP;break;
+        case 7:{
+            if(cpu->cnd)cpu->pc=cpu->valC;
+            else cpu->pc=cpu->valP;
+            break;
+        }
+        case 8:cpu->pc=cpu->valC;break;
+        case 9: cpu->pc=cpu->valM;break;
+    }
 }
