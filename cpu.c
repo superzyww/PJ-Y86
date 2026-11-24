@@ -88,7 +88,52 @@ void execute(CPU *cpu)
     /* TODO: 选择 ALU 操作数并计算 valE。OPq 更新 ZF、SF、OF。
        条件传送和跳转使用 check_cond 计算 cnd。使用无符号运算实现 64 位回绕。 */
     cpu->valE = 0;
-    cpu->cnd = 0;
+    cpu->cnd = 0;//未来需要更新
+    switch(cpu->icode){
+        case 2:{
+            if(cpu->ifun==0)cpu->valE=cpu->valA;
+            else {
+                cpu->cnd=check_cond(cpu,cpu->ifun);
+                if(cpu->cnd) cpu->valE=cpu->valA;
+                
+            }break;
+        }
+        case 3:cpu->valE=cpu->valC;break;
+        case 4:case 5:cpu->valE=cpu->valC+cpu->valB;break;
+        case 6:{
+            if(cpu->ifun==0) cpu->valE=cpu->valA+cpu->valB;
+            if(cpu->ifun==1) cpu->valE=cpu->valB-cpu->valA;
+            if(cpu->ifun==2) cpu->valE=cpu->valB&cpu->valA;
+            if(cpu->ifun==3) cpu->valE=cpu->valB^cpu->valA;
+            cpu->zf=cpu->valE==0;
+            cpu->sf=(int)(cpu->valE>>63);
+            int a=(int)(cpu->valA>>63);
+            int b=(int)(cpu->valB>>63);
+            cpu->of=0;
+            if(cpu->ifun==0){
+                cpu->of=(a==b)&&(cpu->sf!=a);
+            }
+            if(cpu->ifun==1){
+                cpu->of=(a!=b)&&(cpu->sf!=b);
+            }
+            break;
+        }
+        case 7:{
+             if(cpu->ifun==0)cpu->valE=cpu->valC;
+            else {
+                cpu->cnd=check_cond(cpu,cpu->ifun);
+                if(cpu->cnd) cpu->valE=cpu->valC;
+                
+            }break;
+        }
+        case 8: case 0xA:{
+            cpu->valE=cpu->valB-8; break;
+        }
+        case 9: case 0xB:{
+            cpu->valE=cpu->valB+8; break;
+        }
+    }
+
 }
 
 void memory_stage(CPU *cpu)
